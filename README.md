@@ -7,11 +7,13 @@ A detailed technical presentation on **Argo CD** and **Kargo** — how they work
 | File | Description | Audience |
 |------|-------------|----------|
 | [presentation/practical-example.md](presentation/practical-example.md) | **Start here** — simple guide with practical examples | Beginners |
+| [presentation/git-strategy-practical-example.md](presentation/git-strategy-practical-example.md) | Git strategy for GitOps (branches, repos, layouts) | Beginners / teams designing repos |
 | [presentation/kargo-and-argocd.md](presentation/kargo-and-argocd.md) | Full technical slide deck | Intermediate / advanced |
 
 ## Which Presentation Should I Read?
 
 - **New to Kargo and Argo CD?** → Open `presentation/practical-example.md`
+- **Designing your Git repo layout and branch strategy?** → Open `presentation/git-strategy-practical-example.md`
 - **Need architecture, CRDs, and deep integration details?** → Open `presentation/kargo-and-argocd.md`
 
 ## Viewing the Presentation
@@ -38,3 +40,5 @@ Information in this presentation is based on official documentation:
 - [Kargo Documentation](https://docs.kargo.io/)
 - [Kargo Quickstart](https://docs.kargo.io/quickstart)
 - [Argo CD Integration Guide](https://docs.kargo.io/user-guide/how-to-guides/argo-cd-integration)
+- [Kargo Git Patterns](https://docs.kargo.io/user-guide/patterns)
+- [Argo CD Best Practices](https://argo-cd.readthedocs.io/en/stable/user-guide/best_practices/)
