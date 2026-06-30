@@ -4,14 +4,20 @@ A detailed technical presentation on **Argo CD** and **Kargo** — how they work
 
 ## Contents
 
-| File | Description |
-|------|-------------|
-| [presentation/kargo-and-argocd.md](presentation/kargo-and-argocd.md) | Full slide deck (Marp-compatible Markdown) |
+| File | Description | Audience |
+|------|-------------|----------|
+| [presentation/practical-example.md](presentation/practical-example.md) | **Start here** — simple guide with practical examples | Beginners |
+| [presentation/kargo-and-argocd.md](presentation/kargo-and-argocd.md) | Full technical slide deck | Intermediate / advanced |
+
+## Which Presentation Should I Read?
+
+- **New to Kargo and Argo CD?** → Open `presentation/practical-example.md`
+- **Need architecture, CRDs, and deep integration details?** → Open `presentation/kargo-and-argocd.md`
 
 ## Viewing the Presentation
 
 ### Option 1: Read as Markdown
-Open `presentation/kargo-and-argocd.md` in any Markdown viewer or GitHub.
+Open either presentation file in any Markdown viewer or GitHub.
 
 ### Option 2: Export to PDF/HTML with Marp
 ```bash
