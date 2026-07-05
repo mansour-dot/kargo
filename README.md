@@ -1,17 +1,19 @@
-# Kargo & Argo CD Presentation
+# Kubernetes GitOps Presentations
 
-A detailed technical presentation on **Argo CD** and **Kargo** — how they work together in a GitOps-based continuous delivery pipeline for Kubernetes.
+Technical presentations on **Helm**, **Argo CD**, and **Kargo** — from beginner-friendly guides to deep integration details for GitOps-based continuous delivery on Kubernetes.
 
 ## Contents
 
 | File | Description | Audience |
 |------|-------------|----------|
-| [presentation/practical-example.md](presentation/practical-example.md) | **Start here** — simple guide with practical examples | Beginners |
+| [presentation/helm-practical-example.md](presentation/helm-practical-example.md) | **Start here for Helm** — package manager basics with hands-on examples | Beginners |
+| [presentation/practical-example.md](presentation/practical-example.md) | Kargo & Argo CD — simple guide with practical examples | Beginners |
 | [presentation/git-strategy-practical-example.md](presentation/git-strategy-practical-example.md) | Git strategy for GitOps (branches, repos, layouts) | Beginners / teams designing repos |
 | [presentation/kargo-and-argocd.md](presentation/kargo-and-argocd.md) | Full technical slide deck | Intermediate / advanced |
 
 ## Which Presentation Should I Read?
 
+- **New to Helm?** → Open `presentation/helm-practical-example.md`
 - **New to Kargo and Argo CD?** → Open `presentation/practical-example.md`
 - **Designing your Git repo layout and branch strategy?** → Open `presentation/git-strategy-practical-example.md`
 - **Need architecture, CRDs, and deep integration details?** → Open `presentation/kargo-and-argocd.md`
@@ -34,8 +36,10 @@ Install the [Marp for VS Code](https://marketplace.visualstudio.com/items?itemNa
 
 ## Sources
 
-Information in this presentation is based on official documentation:
+Information in these presentations is based on official documentation:
 
+- [Helm Documentation](https://helm.sh/docs/)
+- [Helm Chart Best Practices](https://helm.sh/docs/chart_best_practices/)
 - [Argo CD Documentation](https://argo-cd.readthedocs.io/)
 - [Kargo Documentation](https://docs.kargo.io/)
 - [Kargo Quickstart](https://docs.kargo.io/quickstart)
