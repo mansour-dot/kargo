@@ -2,8 +2,8 @@
 marp: true
 theme: default
 paginate: true
-header: 'Git Strategy for GitOps'
-footer: 'Practical guide with examples'
+header: 'Git Strategies — Practical Examples'
+footer: 'Common branching models explained simply'
 style: |
   section { font-size: 26px; }
   h1 { color: #2563eb; }
@@ -12,676 +12,543 @@ style: |
   table { font-size: 21px; }
 ---
 
-# Git Strategy for GitOps
-## Detailed + Simple Guide with Practical Examples
+# Git Strategies
+## Common Types Explained Simply
 
-**How to organize Git when using Kargo and Argo CD**
+**Practical examples for teams of any size**
 
 ---
 
 # Who Is This For?
 
-You should read this if you ask:
+This guide is for you if:
 
-- "Which branch should Test/Prod use?"
-- "Should app code and deployment config live in one repo?"
-- "How do I avoid breaking GitOps with wrong Git layout?"
-- "What is the safest Git strategy for promotions?"
+- You hear words like **GitFlow**, **GitHub Flow**, **trunk-based**
+- Your team is confused about **which branch to use**
+- You want a **simple comparison** with real examples
 
-**No Git expert level required.**
-
----
-
-# Big Idea in One Slide
-
-In GitOps:
-
-> **Git is the contract** between humans and Kubernetes.
-
-Your Git strategy answers 3 questions:
-
-1. **Where** do we store deployment config?
-2. **How** do we separate test/staging/prod?
-3. **Who** can change what, and when?
+**No expert Git knowledge required.**
 
 ---
 
-# Two Different Repos (Very Important)
+# What Is a Git Strategy?
 
-Argo CD best practice: split repositories.
+A **Git strategy** (branching model) answers:
 
-| Repo | Contains | Changed by |
-|------|----------|------------|
-| **App source repo** | Java/Go/Node code, Dockerfile, unit tests | Developers |
-| **GitOps config repo** | Kubernetes YAML, Helm/Kustomize files | CI + Kargo + platform team |
+1. Which branches do we keep?
+2. Where do developers create changes?
+3. How do we merge and release?
+4. How do we fix production bugs?
 
-**Why split?**
-- Cleaner audit history
-- Avoid CI infinite loops
-- Different access permissions (dev vs prod)
+Without a strategy: messy branches, broken `main`, slow releases.
 
 ---
 
-# Example: Bad vs Good Repo Design
+# Big Picture: 6 Common Strategies
 
-### ❌ Bad (everything mixed)
-```
-my-app/
-├── src/main.go
-├── Dockerfile
-└── k8s/prod-deployment.yaml
-```
-
-### ✅ Good (separated)
-```
-my-app/                  # source repo
-└── src/main.go
-
-my-app-config/           # gitops repo
-├── base/
-└── stages/
-```
-
-Argo CD reads **only** `my-app-config`.
+| Strategy | Simple idea |
+|----------|-------------|
+| **Feature Branch** | One branch per feature + PR |
+| **GitHub Flow** | Short branches → merge to `main` → deploy |
+| **Git Flow** | Long-lived `develop` + release/hotfix branches |
+| **GitLab Flow** | Environment branches (`staging`, `production`) |
+| **Trunk-Based** | Tiny branches, frequent merge to `main` |
+| **Forking** | Contributors work in their own fork |
 
 ---
 
-# What Kargo Writes to Git
+# Strategy 1: Feature Branch Workflow
 
-During promotion, Kargo usually:
-
-1. Reads config from Git
-2. Updates image tag / values
-3. Renders final manifests
-4. Commits result back to Git
-5. Argo CD syncs that commit
-
-So your Git strategy must support **read path** and **write path**.
-
----
-
-# 3 Main Git Storage Strategies
-
-| Strategy | Simple description | Best for |
-|----------|-------------------|----------|
-| **A. Stage branches** | `stage/test`, `stage/prod` | Most Kargo users (recommended) |
-| **B. Single branch + folders** | `src/` input, `builds/` output on `main` | Teams that hate many branches |
-| **C. Separate output repo** | Input repo + deploy repo | Strong compliance separation |
-
-We will show practical examples for all 3.
-
----
-
-# Strategy A: Stage-Specific Branches (Recommended)
-
-**Idea:** each environment has its own branch storage.
+**Idea:** every change gets its own branch.
 
 ```
-main              -> shared base config (input)
-stage/test        -> rendered config for test
-stage/staging     -> rendered config for staging
-stage/prod        -> rendered config for prod
+main
+ └── feature/login-page
+ └── feature/payment-api
+ └── bugfix/cart-total
 ```
 
-Argo CD app for test watches `stage/test`.
-Argo CD app for prod watches `stage/prod`.
+1. Create branch from `main`
+2. Commit your work
+3. Open Pull Request / Merge Request
+4. Review → merge → delete branch
 
 ---
 
-# Strategy A: Why Kargo Recommends It
+# Example: Feature Branch
 
-From Kargo docs:
+```bash
+git checkout main
+git pull
+git checkout -b feature/add-search
 
-- Stage branches are **storage**, not GitFlow merges
-- You do **not** need to merge `stage/prod` back to `main`
-- Think of each branch like a separate folder/bucket
-
-**Benefit:** clear per-environment history and easy rollback.
-
----
-
-# Strategy A: Practical Repo Layout (Kustomize)
-
-```
-shop-config/
-├── base/
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   └── kustomization.yaml
-└── stages/
-    ├── test/
-    │   └── kustomization.yaml
-    ├── staging/
-    │   └── kustomization.yaml
-    └── prod/
-        └── kustomization.yaml
+# ... code changes ...
+git add .
+git commit -m "Add product search box"
+git push -u origin feature/add-search
 ```
 
-- `main` branch keeps this structure
-- Kargo writes rendered output to `stage/<env>` branches
+Then open a PR: `feature/add-search` → `main`
+
+**Best for:** small/medium teams learning Git collaboration.
 
 ---
 
-# Strategy A: Example File (`base/deployment.yaml`)
+# Strategy 2: GitHub Flow
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: shop
-spec:
-  replicas: 2
-  template:
-    spec:
-      containers:
-      - name: shop
-        image: ghcr.io/acme/shop:1.0.0
-```
-
-This is shared base config used by all environments.
-
----
-
-# Strategy A: Example Overlay (`stages/test/kustomization.yaml`)
-
-```yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-- ../../base
-patches:
-- patch: |-
-    - op: replace
-      path: /spec/replicas
-      value: 1
-```
-
-Test uses 1 replica; prod can use more.
-
----
-
-# Strategy A: Promotion Flow Example
-
-**Freight contains image `shop:2.3.0`**
-
-1. Promote to `test`
-2. Kargo updates image in base
-3. Kargo builds `stages/test`
-4. Kargo commits to branch `stage/test`
-5. Argo CD app `shop-test` syncs `stage/test`
-
-Later, same Freight can be promoted to `stage/prod`.
-
----
-
-# Strategy A: Argo CD Mapping Example
-
-```yaml
-# test app
-source:
-  repoURL: https://github.com/acme/shop-config.git
-  targetRevision: stage/test
-  path: .
-
-# prod app
-source:
-  repoURL: https://github.com/acme/shop-config.git
-  targetRevision: stage/prod
-  path: .
-```
-
-Same repo, different branches per environment.
-
----
-
-# Strategy B: Single Branch (`main`) + Folders
-
-For teams that want one branch only:
+**Idea:** `main` is always deployable.
 
 ```
-shop-config/
-├── src/                 # INPUT (edited by humans/tools)
-│   ├── base/
-│   └── stages/
-└── builds/              # OUTPUT (written by Kargo)
-    ├── test/
-    ├── staging/
-    └── prod/
+main (always ready to deploy)
+ └── feature/xyz   (short-lived)
 ```
 
-Argo CD watches `builds/test`, `builds/prod`, etc. on `main`.
+Rules:
+1. Create a branch from `main`
+2. Add commits
+3. Open Pull Request
+4. Review + CI checks
+5. Merge to `main`
+6. Deploy immediately (or almost)
 
 ---
 
-# Strategy B: Why `src` and `builds` Must Be Separate
+# Example: GitHub Flow Day
 
-If Kargo writes back into `src`, you risk a **feedback loop**:
+**09:00** — Start `feature/dark-mode`
+**11:00** — Open PR, CI runs tests
+**12:00** — Reviewer approves
+**12:10** — Merge to `main`
+**12:15** — Auto-deploy to production
 
-1. Kargo writes output
-2. Warehouse sees "new commit"
-3. New Freight created automatically
-4. Unexpected promotions
-
-**Rule:** output path must be different from monitored input path.
-
----
-
-# Strategy B: Warehouse Path Filter Example
-
-```yaml
-spec:
-  subscriptions:
-  - git:
-      repoURL: https://github.com/acme/shop-config.git
-      branch: main
-      includePaths:
-      - src/**
-```
-
-This means:
-- changes in `src/**` can create Freight
-- changes in `builds/**` are ignored
+**Best for:** web apps with continuous delivery.
+**Avoid if:** you need long release cycles and versioned releases.
 
 ---
 
-# Strategy B: Argo CD Example
+# Strategy 3: Git Flow
 
-```yaml
-source:
-  repoURL: https://github.com/acme/shop-config.git
-  targetRevision: main
-  path: builds/prod
-```
-
-Prod app always reads rendered manifests from `builds/prod`.
-
----
-
-# Strategy C: Separate Output Repository
-
-Some teams use:
-
-- **Config source repo** (`shop-config-src`)
-- **Deployment repo** (`shop-config-deploy`)
-
-Kargo reads from source repo, writes rendered manifests to deploy repo.
-
-**Use when:** strict separation of "design-time config" vs "runtime deploy artifacts".
-
----
-
-# Strategy C: Practical Example
+**Idea:** clear roles for each long-lived branch.
 
 ```
-shop-config-src/                 shop-config-deploy/
-├── base/                        ├── test/
-└── stages/                      ├── staging/
-                                 └── prod/
+main        = production-ready releases
+develop     = integration branch for next release
+feature/*   = new work (from develop)
+release/*   = prepare a release
+hotfix/*    = urgent production fix
 ```
 
-Promotion step:
-- clone from `shop-config-src`
-- push rendered files to `shop-config-deploy` branch/folder
-
-Argo CD watches only `shop-config-deploy`.
+Created by Vincent Driessen (popular classic model).
 
 ---
 
-# Git Strategy vs GitFlow (Don't Confuse Them)
+# Git Flow: Branch Roles
 
-| Topic | GitFlow | Kargo stage branches |
-|-------|---------|----------------------|
-| Purpose | Feature/release workflow for app code | Environment storage for deploy config |
-| Merge direction | feature → develop → main | Not required between stage branches |
-| Who uses it | App developers | Platform/CD pipeline |
-| Main branch role | Production code line | Shared base config input |
-
-**Stage branches are not GitFlow.**
-
----
-
-# Branching Models for App Code (Separate Topic)
-
-For application source code, common options:
-
-| Model | Summary | Good when |
-|-------|---------|-----------|
-| **Trunk-based** | short-lived branches, frequent merge to `main` | fast CI/CD teams |
-| **GitFlow** | `develop`, `release`, `hotfix` branches | scheduled releases |
-| **GitHub Flow** | feature branch + PR to `main` | simple web apps |
-
-**Important:** this is for app code repo, not necessarily GitOps config repo.
+| Branch | Purpose |
+|--------|---------|
+| `main` | Stable production code + version tags |
+| `develop` | Latest completed features for next release |
+| `feature/*` | One feature in progress |
+| `release/*` | Freeze features, fix bugs, bump version |
+| `hotfix/*` | Emergency fix from `main` |
 
 ---
 
-# Practical Example: End-to-End Git Flow
+# Example: Git Flow Feature
 
-1. Developer merges feature to app repo `main`
-2. CI builds image `shop:2.4.0` and pushes to registry
-3. Kargo Warehouse detects new image
-4. Freight `#108` created
-5. Promote `#108` to test → commit on `stage/test`
-6. Argo CD deploys test
-7. Promote to prod → commit on `stage/prod`
-8. Argo CD deploys prod
+```bash
+git checkout develop
+git pull
+git checkout -b feature/user-profile
 
-Git history shows exact promoted versions per environment.
+# work...
+git commit -m "Add user profile page"
+git checkout develop
+git merge --no-ff feature/user-profile
+git branch -d feature/user-profile
+```
+
+Feature merges into **`develop`**, not directly into `main`.
 
 ---
 
-# Commit Message Strategy (Practical)
+# Example: Git Flow Release
 
-Use clear, machine-friendly messages:
+```bash
+git checkout develop
+git checkout -b release/1.2.0
 
+# bump version, fix small bugs only
+git commit -m "Bump version to 1.2.0"
+
+git checkout main
+git merge --no-ff release/1.2.0
+git tag -a v1.2.0 -m "Release 1.2.0"
+
+git checkout develop
+git merge --no-ff release/1.2.0
+git branch -d release/1.2.0
+```
+
+Release goes to **both** `main` and `develop`.
+
+---
+
+# Example: Git Flow Hotfix
+
+Production bug found on `v1.2.0`:
+
+```bash
+git checkout main
+git checkout -b hotfix/1.2.1
+
+# fix the bug
+git commit -m "Fix login crash"
+
+git checkout main
+git merge --no-ff hotfix/1.2.1
+git tag -a v1.2.1 -m "Hotfix 1.2.1"
+
+git checkout develop
+git merge --no-ff hotfix/1.2.1
+```
+
+**Best for:** scheduled releases, versioned products, mobile/app stores.
+
+---
+
+# Strategy 4: GitLab Flow
+
+**Idea:** combine feature branches with **environment branches**.
+
+```
+main
+ └── feature/xyz   → merge to main
+main ───────────────▶ staging ───────────────▶ production
+```
+
+Or:
+
+```
+main → pre-production → production
+```
+
+Promotion between environments is done by merging branches.
+
+---
+
+# Example: GitLab Flow Promotion
+
+```bash
+# feature merged to main (after PR)
+git checkout main
+git merge feature/checkout-button
+
+# promote to staging
+git checkout staging
+git merge main
+
+# after QA passes, promote to production
+git checkout production
+git merge staging
+```
+
+**Best for:** teams that map branches to environments (staging/prod).
+**Note:** environment branches can become hard to keep in sync.
+
+---
+
+# Strategy 5: Trunk-Based Development
+
+**Idea:** everyone merges to one trunk (`main`) many times per day.
+
+```
+main (trunk)
+ ├── short-lived-branch-1  (hours, not weeks)
+ ├── short-lived-branch-2
+ └── short-lived-branch-3
+```
+
+Rules:
+- Branches live **hours/days**, not weeks
+- Prefer small changes
+- Use feature flags for incomplete work
+- Strong CI is required
+
+---
+
+# Example: Trunk-Based + Feature Flag
+
+```bash
+git checkout -b add-new-checkout
+# implement behind flag NEW_CHECKOUT=false
+git commit -m "Add checkout v2 behind feature flag"
+# merge same day to main
+```
+
+In production config:
 ```text
-promote(shop): ghcr.io/acme/shop:2.4.0 -> test
-
-- freight: shop-108
-- promoted-by: jane.doe
-- source-freight-from: warehouse
+NEW_CHECKOUT=false   # hidden
+NEW_CHECKOUT=true    # enable for 10% users later
 ```
 
-Benefits:
-- easy search in Git
-- easier incident investigation
-- better audit for compliance
+**Best for:** high-performing DevOps teams, continuous delivery.
+**Hard if:** weak tests / no CI / large long-running branches.
 
 ---
 
-# Pull Request Strategy (Production Safety)
+# Strategy 6: Forking Workflow
 
-For production, many teams require PR approval:
+**Idea:** each contributor has their own copy (fork) of the repo.
 
-```yaml
-steps:
-- uses: git-push
-  as: push
-  config:
-    generateTargetBranch: true
-- uses: git-open-pr
-  config:
-    sourceBranch: ${{ outputs.push.branch }}
-    targetBranch: stage/prod
-- uses: git-wait-for-pr
-- uses: argocd-update
+```
+upstream (company repo)
+ └── your-fork
+      └── feature/fix-docs
+           └── Pull Request back to upstream
 ```
 
-**Meaning:** prod Git change is reviewed before deploy.
+Common in open source (Linux, Kubernetes, many GitHub projects).
 
 ---
 
-# Example: PR Promotion Timeline
+# Example: Forking Workflow
 
-1. Kargo opens PR: `promo/prod-2026-06-30-001` → `stage/prod`
-2. SRE reviews rendered YAML diff
-3. Approver merges PR
-4. Kargo continues and triggers Argo CD sync
-5. Production deployment starts
+```bash
+# 1) Fork on GitHub UI, then clone YOUR fork
+git clone https://github.com/you/project.git
+cd project
 
-This gives human gate without breaking GitOps.
+# 2) Add original repo as upstream
+git remote add upstream https://github.com/org/project.git
+
+# 3) Create branch and push to YOUR fork
+git checkout -b docs/fix-readme
+git push -u origin docs/fix-readme
+
+# 4) Open PR: your-fork → org/project
+```
+
+**Best for:** open source and external contributors.
 
 ---
 
-# Monorepo Git Strategy (Multiple Apps)
+# Quick Comparison Table
 
-When one GitOps repo has many apps:
-
-```
-platform-config/
-├── shop/
-│   ├── base/
-│   └── stages/
-├── payments/
-│   ├── base/
-│   └── stages/
-└── auth/
-    ├── base/
-    └── stages/
-```
-
-Use path filters per Warehouse:
-
-- `shop` warehouse watches `shop/**`
-- `payments` warehouse watches `payments/**`
+| Strategy | Speed | Complexity | Typical use |
+|----------|-------|------------|-------------|
+| Feature Branch | Medium | Low | Most teams starting out |
+| GitHub Flow | Fast | Low | SaaS / continuous deploy |
+| Git Flow | Medium/Slow | High | Versioned releases |
+| GitLab Flow | Medium | Medium | Env-based promotion |
+| Trunk-Based | Very fast | Medium | Elite CD teams |
+| Forking | Medium | Medium | Open source |
 
 ---
 
-# Monorepo Warehouse Filter Example
+# Same Feature in 3 Strategies
 
-```yaml
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Warehouse
-metadata:
-  name: shop
-spec:
-  subscriptions:
-  - git:
-      repoURL: https://github.com/acme/platform-config.git
-      branch: main
-      includePaths:
-      - shop/**
-  - image:
-      repoURL: ghcr.io/acme/shop
-```
+Feature: **Add discount coupon**
 
-Prevents unrelated app changes from triggering shop Freight.
+### GitHub Flow
+`feature/coupon` → PR → `main` → deploy
+
+### Git Flow
+`feature/coupon` → `develop` → `release/x.y` → `main` + tag
+
+### Trunk-Based
+tiny PR to `main` same day, feature flag off until ready
 
 ---
 
-# Helm Git Layout Example
+# Practical Example: Small Startup
+
+**Team:** 5 developers, deploy many times/week
+
+**Choose:** GitHub Flow or Trunk-Based
 
 ```
-shop-config/
-├── Chart.yaml
-├── values.yaml              # base defaults
-├── templates/
-│   ├── deployment.yaml
-│   └── service.yaml
-└── stages/
-    ├── test/values.yaml
-    ├── staging/values.yaml
-    └── prod/values.yaml
+main
+ └── feature/* (short)
 ```
-
-Promotion can:
-- update image tag in base or stage values
-- render chart with `helm-template`
-- commit rendered YAML to stage branch or `builds/prod`
-
----
-
-# Rendered Manifests vs Raw Helm/Kustomize
-
-Kargo recommends **rendered plain YAML** for promotion output.
 
 Why?
-- PR diffs are obvious (`image: 2.3.0` → `2.4.0`)
-- no mental rendering needed during review
-- Argo CD does less work at sync time
-
-**Example output file:** `builds/prod/deployment.yaml` (fully rendered)
+- simple
+- fast feedback
+- less branch maintenance
 
 ---
 
-# Tag vs Branch vs Commit (Argo CD Tracking)
+# Practical Example: Mobile App Company
 
-Argo CD `targetRevision` can be:
+**Team:** releases every 2–4 weeks to App Store
 
-| Value | Example | When to use |
-|-------|---------|-------------|
-| Branch | `stage/prod` | moving environment head (common with Kargo) |
-| Tag | `v2.4.0` | immutable release marker |
-| Commit SHA | `a1b2c3d` | exact pinned deployment |
-
-In Kargo pipelines, stage branches are most common.
-
----
-
-# Practical Example: Rollback with Git
-
-**Incident:** prod `shop:2.4.0` has bug.
-
-### Option 1: Promote older Freight again
-- find previous healthy Freight
-- promote to prod
-
-### Option 2: Git revert on `stage/prod`
-```bash
-git checkout stage/prod
-git revert <bad-commit>
-git push
-```
-Argo CD syncs previous good state.
-
-Git makes rollback auditable.
-
----
-
-# Access Control Git Strategy
-
-Typical permissions:
-
-| Repo / Branch | Developers | QA | SRE/Platform |
-|---------------|-----------|----|--------------|
-| app source `main` | write | read | read |
-| config `main` (`src`) | read/write (limited) | read | write |
-| `stage/test` | indirect via Kargo | read | write |
-| `stage/prod` | no direct write | read | write/approve PR |
-
-Goal: developers promote via Kargo, not direct prod Git edits.
-
----
-
-# Avoid These Common Git Mistakes
-
-| Mistake | Result | Fix |
-|---------|--------|-----|
-| App code + prod YAML in same repo | noisy history, CI loops | split repos |
-| Kargo writes to monitored input path | feedback loop | separate `src` and `builds` |
-| No path filters in monorepo | unrelated promotions | `includePaths` per Warehouse |
-| Floating remote base (`ref=HEAD`) | surprise manifest changes | pin tag/commit SHA |
-| Manual prod YAML edits | drift from process | promote via Kargo only |
-
----
-
-# Feedback Loop Example (What Not To Do)
-
-### ❌ Wrong
-- Warehouse watches `main`
-- Kargo writes rendered output to `main` (same paths)
-
-### ✅ Correct
-- Warehouse watches `main:src/**`
-- Kargo writes to `main:builds/prod/**`
-- OR use `stage/prod` branch
-
-Always define **input scope** and **output location**.
-
----
-
-# Decision Guide: Which Strategy Should I Choose?
-
-Choose **Stage branches (A)** if:
-- you use Kargo promotions across environments
-- you want clearest per-env history
-
-Choose **Single branch folders (B)** if:
-- your team strongly prefers one branch
-- you can enforce path filters correctly
-
-Choose **Separate output repo (C)** if:
-- compliance needs strict artifact separation
-
----
-
-# Starter Template (Recommended for Beginners)
+**Choose:** Git Flow
 
 ```
-my-app-config/
-├── base/
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   └── kustomization.yaml
-└── stages/
-    ├── test/kustomization.yaml
-    ├── staging/kustomization.yaml
-    └── prod/kustomization.yaml
+main / develop / release/* / hotfix/*
 ```
 
-Branches:
-- `main` (source layout)
-- `stage/test`, `stage/staging`, `stage/prod` (rendered output)
-
-This works directly with Kargo quickstart patterns.
+Why?
+- clear release versions (`v2.3.0`)
+- stabilize on release branch
+- hotfix path for store emergencies
 
 ---
 
-# 1-Week Adoption Plan
+# Practical Example: Open Source Library
 
-**Day 1:** create config repo + base/stages layout
-**Day 2:** connect Argo CD apps per environment branch
-**Day 3:** configure Kargo Warehouse + Stages
-**Day 4:** test promotion to `stage/test`
-**Day 5:** add PR gate for prod
-**Day 6:** document commit/rollback process
-**Day 7:** train team with examples and dry run
+**Team:** maintainers + outside contributors
+
+**Choose:** Forking + Feature Branch / GitHub Flow
+
+```
+upstream/main
+ ← PR from contributor forks
+```
+
+Why?
+- outsiders cannot push directly
+- maintainers review every change
+
+---
+
+# Naming Conventions (Useful Everywhere)
+
+| Branch type | Example names |
+|-------------|---------------|
+| Feature | `feature/add-search`, `feat/user-avatar` |
+| Bugfix | `bugfix/login-crash`, `fix/cart-total` |
+| Hotfix | `hotfix/1.2.1-payment-timeout` |
+| Release | `release/2.0.0` |
+| Chore | `chore/upgrade-node-20` |
+
+Keep names short, clear, and consistent.
+
+---
+
+# Pull Request Best Practices
+
+Good PR:
+- small and focused
+- clear title: `Add coupon validation`
+- linked issue
+- tests updated
+- CI green before merge
+
+Bad PR:
+- 40 files mixed with refactor + feature + typo fixes
+- no description
+- “please merge ASAP”
+
+---
+
+# Commit Message Tips
+
+Simple useful format:
+
+```text
+feat: add coupon code validation
+fix: correct tax calculation for carts
+docs: explain branching strategy in README
+chore: upgrade CI Node version to 20
+```
+
+Why?
+- readable history
+- easy changelog generation
+- faster debugging
+
+---
+
+# Common Mistakes
+
+| Mistake | Better approach |
+|---------|-----------------|
+| Long-lived feature branches (weeks) | Smaller PRs, merge often |
+| Commit directly to `main` | Always use PR reviews |
+| No branch naming rules | Agree on `feature/`, `fix/` |
+| Choosing Git Flow “because famous” | Choose based on release style |
+| No CI on PRs | Block merge until tests pass |
+| Hotfixing on random branches | Use clear hotfix path |
+
+---
+
+# Decision Guide
+
+Ask these questions:
+
+1. Do we deploy **many times/day**? → GitHub Flow / Trunk-Based
+2. Do we ship **versioned releases**? → Git Flow
+3. Do branches map to **environments**? → GitLab Flow
+4. Do outsiders contribute? → Forking Workflow
+5. Are we a small team learning Git? → Feature Branch / GitHub Flow
+
+**Pick the simplest model that fits your release style.**
+
+---
+
+# Migration Tip
+
+Do not jump from chaos → full Git Flow overnight.
+
+Recommended path:
+1. Protect `main` (PR required)
+2. Use feature branches + reviews
+3. Add CI checks
+4. Then choose GitHub Flow **or** Git Flow based on release needs
 
 ---
 
 # Cheat Sheet
 
 ```
-Source repo      = app code
-Config repo      = deployment desired state
-main             = shared base config input
-stage/<env>      = environment-specific rendered output
-Kargo            = writes promotion commits
-Argo CD          = reads Git and deploys
-Path filters     = prevent feedback loops
-PR gate          = human approval for prod
+Feature Branch = one branch per change + PR
+GitHub Flow    = short branches, main always deployable
+Git Flow       = main + develop + release + hotfix
+GitLab Flow    = promote via environment branches
+Trunk-Based    = tiny frequent merges to main
+Forking        = work in your fork, PR upstream
 ```
 
 ---
 
 # Practice Questions
 
-1. Why separate app repo and config repo?
-2. What is a feedback loop in GitOps?
-3. Why are stage branches not GitFlow?
-4. Where should Kargo write rendered manifests?
-5. How do you rollback production safely?
+1. Which strategy uses `develop` + `release/*`?
+2. Which strategy keeps `main` always deployable with short branches?
+3. When is forking the best choice?
+4. What is the main risk of long-lived feature branches?
+5. Which strategy often uses feature flags?
 
 ---
 
 # Answer Key
 
-1. Cleaner history, safer permissions, no CI loops
-2. Kargo output triggers Warehouse again unintentionally
-3. Stage branches are environment storage, not feature flow
-4. `stage/<env>`, or `builds/<env>`, or separate deploy repo
-5. Promote old Freight or revert commit on prod branch
+1. **Git Flow**
+2. **GitHub Flow** (also Trunk-Based)
+3. **Open source / external contributors**
+4. **Merge conflicts, delayed feedback, hard reviews**
+5. **Trunk-Based Development**
 
 ---
 
 # Final Summary
 
-A good Git strategy for Kargo + Argo CD is:
+There is no single “best” Git strategy.
 
-- **Simple** enough for the whole team
-- **Explicit** about input vs output paths
-- **Safe** with promotion gates and auditable commits
-- **Practical** with real per-environment branches or folders
+- Choose based on **team size**, **release speed**, and **risk**
+- Keep rules simple and written down
+- Protect `main`, use PRs, run CI
+- Start simple; add complexity only when needed
 
-Git is not just storage — it is your deployment timeline.
+A clear Git strategy makes delivery predictable for everyone.
 
 ---
 
 # Thank You
 
-Related files in this repo:
-- `presentation/practical-example.md`
-- `presentation/kargo-and-argocd.md`
-
-Official references:
-- https://docs.kargo.io/user-guide/patterns
-- https://argo-cd.readthedocs.io/en/stable/user-guide/best_practices/
+Useful references:
+- GitHub Flow: https://docs.github.com/en/get-started/using-github/github-flow
+- Git Flow (original): https://nvie.com/posts/a-successful-git-branching-model/
+- Trunk-Based Development: https://trunkbaseddevelopment.com/
