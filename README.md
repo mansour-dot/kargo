@@ -9,7 +9,7 @@ Technical presentations on **Helm**, **Argo CD**, **Kargo**, and **Istio** — f
 | [presentation/helm-practical-example.md](presentation/helm-practical-example.md) | **Start here for Helm** — package manager basics with hands-on examples | Beginners |
 | [presentation/istio-practical-example.md](presentation/istio-practical-example.md) | **Start here for Istio** — service mesh basics with practical examples | Beginners |
 | [presentation/practical-example.md](presentation/practical-example.md) | Kargo & Argo CD — simple guide with practical examples | Beginners |
-| [presentation/git-strategy-practical-example.md](presentation/git-strategy-practical-example.md) | Common Git strategies (Git Flow, GitHub Flow, trunk-based, etc.) | Beginners / teams choosing a branching model |
+| [presentation/git-strategy-practical-example.md](presentation/git-strategy-practical-example.md) | Git / branching strategies — how to tell Git Flow, GitHub Flow, GitLab Flow, trunk-based, and forking apart | Beginners / teams choosing a branching model |
 | [presentation/kargo-and-argocd.md](presentation/kargo-and-argocd.md) | Full technical slide deck | Intermediate / advanced |
 
 ## Which Presentation Should I Read?

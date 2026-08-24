@@ -2,623 +2,465 @@
 marp: true
 theme: default
 paginate: true
-header: 'Common Git Strategies'
-footer: 'Clear examples for each type'
+header: 'Git / Branching Strategy'
+footer: 'How to tell the 6 types apart'
 style: |
-  section { font-size: 26px; }
+  section { font-size: 25px; }
   h1 { color: #2563eb; }
   h2 { color: #1e40af; }
-  code { background: #f1f5f9; font-size: 20px; }
-  table { font-size: 20px; }
+  code { background: #f1f5f9; font-size: 19px; }
+  table { font-size: 19px; }
 ---
 
-# Common Git Strategies
-## Clear Explanation + One Example for Each Type
+# Git Strategy = Branching Strategy
+## How to tell each type apart
 
-**Same story in every example: add a Discount Coupon to an online shop**
-
----
-
-# What You Will Learn
-
-By the end you can answer:
-
-1. What is a Git strategy?
-2. What are the 6 common types?
-3. How does each one handle the **same feature**?
-4. Which one should **your team** choose?
+**If they feel the same, look at ONE unique rule per type.**
 
 ---
 
-# What Is a Git Strategy?
+# Why it feels confusing
 
-A Git strategy is a **team agreement** about branches.
+All 6 types do this:
 
-It answers 4 simple questions:
+```
+create a branch  →  write code  →  open a PR  →  merge
+```
 
-| Question | Example answer |
-|----------|----------------|
-| Where is stable code? | `main` |
-| Where do I work? | `feature/coupon` |
-| How do we release? | merge PR, then deploy |
-| How do we fix production? | `hotfix/*` branch |
+So they look similar.
 
----
+**They are different in the next question:**
 
-# One Story for All Examples
+> After the coupon is finished, **where does it go**, and **when do users see it?**
 
-**App:** Online shop  
-**Team:** 4 developers  
-**Task:** Add **Discount Coupon** feature
-
-We will show this same task in:
-
-1. Feature Branch
-2. GitHub Flow
-3. Git Flow
-4. GitLab Flow
-5. Trunk-Based
-6. Forking
-
-So you can compare them easily.
+That one answer is how you tell them apart.
 
 ---
 
-# The 6 Types at a Glance
+# The 6 types — one unique rule each
 
-| Type | In one sentence |
-|------|-----------------|
-| **1. Feature Branch** | One branch per change, then merge with a PR |
-| **2. GitHub Flow** | Short branch → merge to `main` → deploy now |
-| **3. Git Flow** | `develop` for work, `main` for releases, extra release/hotfix branches |
-| **4. GitLab Flow** | Promote code by merging: `main` → `staging` → `production` |
-| **5. Trunk-Based** | Tiny daily merges to `main`, hide unfinished work with flags |
-| **6. Forking** | Work in your own copy of the repo, then send a PR |
+| Type | Unique rule (remember only this) |
+|------|-------------------------------------|
+| **1. Feature Branch** | One branch per change + PR. **No extra rule** about deploy or versions. |
+| **2. GitHub Flow** | Merge to `main` **and deploy production immediately**. |
+| **3. Git Flow** | Two long branches: **`develop` = work**, **`main` = released versions only**. |
+| **4. GitLab Flow** | Extra branches named after **environments**: `staging`, `production`. |
+| **5. Trunk-Based** | Merge to `main` **even if unfinished**. Hide it with a **feature flag**. |
+| **6. Forking** | You do **not** push to the company repo. You work in **your copy**. |
+
+If you remember the **unique rule**, you can differentiate them.
 
 ---
 
-# Type 1: Feature Branch Workflow
+# Same story for every type
 
-## What it is
+**App:** online shop  
+**Task:** add **Discount Coupon**
 
-Every new change lives on its **own branch**.  
-Nobody commits directly to `main`.  
-A Pull Request (PR) is required.
+Ask for each type:
+
+1. Which branch do I create?
+2. Which branch do I merge into?
+3. When do customers see the coupon?
+
+---
+
+# Picture: the only thing that changes
+
+```
+          Feature Branch     →  merge to main           (deploy later, maybe)
+          GitHub Flow        →  merge to main           (deploy NOW)
+          Git Flow           →  merge to develop         (users wait for a release)
+          GitLab Flow       →  main → staging → prod    (users after last merge)
+          Trunk-Based       →  merge to main hidden     (users when flag = ON)
+          Forking           →  PR from YOUR fork         (not from company clone)
+```
+
+---
+
+# Type 1 — Feature Branch
+
+## Unique rule
+**One change = one branch + one PR.** That is all.
+
+No `develop`. No “must deploy now”. No feature flag.
 
 ```
 main
- └── feature/discount-coupon
- └── feature/new-cart
- └── fix/login-bug
+ └── feature/discount-coupon   →  PR  →  main
 ```
 
 ---
 
-# Type 1: When to use
-
-**Use when:**
-- Team is learning Git
-- You want simple reviews
-- You do not need complex release versions yet
-
-**Do not use alone when:**
-- You need strict version numbers like `v1.4.0`
-- Many environments must be promoted in order
-
----
-
-# Type 1: Clear Example (Discount Coupon)
-
-**Goal:** Sara adds a coupon box on checkout.
+# Type 1 — Coupon example
 
 ```bash
-# 1. Start from latest main
 git checkout main
-git pull
-
-# 2. Create a branch for this one feature
 git checkout -b feature/discount-coupon
-
-# 3. Write code, then save it
-git add .
-git commit -m "Add discount coupon field on checkout"
-
-# 4. Publish the branch
+# write coupon code
+git commit -m "Add discount coupon"
 git push -u origin feature/discount-coupon
 ```
 
-Then Sara opens a PR: **`feature/discount-coupon` → `main`**
+PR: `feature/discount-coupon` → `main`
+
+**Customers see it:** after someone deploys `main` (today or later).  
+The strategy **does not force** a deploy time.
 
 ---
 
-# Type 1: What happens next
+# Type 1 — Do not confuse with GitHub Flow
 
-1. CI runs tests
-2. Ahmed reviews the PR
-3. Sara fixes review comments
-4. PR is merged into `main`
-5. Branch `feature/discount-coupon` is deleted
+They look the same (branch + PR to `main`).
 
-**Result:** `main` now has the coupon feature.
+| | Feature Branch | GitHub Flow |
+|--|----------------|-------------|
+| Branch + PR to `main` | Yes | Yes |
+| Must deploy after merge? | **No** | **Yes** |
 
-This is the base of almost every other strategy.
+**Feature Branch** = how you **work**.  
+**GitHub Flow** = Feature Branch **+ deploy `main` every time**.
 
 ---
 
-# Type 2: GitHub Flow
+# Type 2 — GitHub Flow
 
-## What it is
-
-Same as Feature Branch, plus one extra rule:
-
-> **`main` is always ready to go to production.**
+## Unique rule
+**`main` is always production-ready, and you deploy it right after merge.**
 
 ```
-main  (can deploy at any time)
- └── feature/discount-coupon   (lives only 1 day or a few days)
+main  (live / always deployable)
+ └── feature/discount-coupon   →  PR  →  main  →  deploy NOW
 ```
 
-Merge to `main` = you can deploy.
+No `develop`. No `staging` branch. No waiting for “release day”.
 
 ---
 
-# Type 2: Rules (very simple)
+# Type 2 — Coupon example
 
-1. Create a short-lived branch from `main`
-2. Open a PR early (even before finished)
-3. CI must be green
-4. Review + merge
-5. Deploy `main` immediately
-
-No `develop` branch.  
-No `release` branch.
-
----
-
-# Type 2: Clear Example (same coupon)
-
-**Monday 09:00** Sara starts:
+09:00 create `feature/discount-coupon`  
+11:00 open PR  
+12:00 merge to `main`  
+12:05 **production website updates**
 
 ```bash
 git checkout main
-git pull
 git checkout -b feature/discount-coupon
+git commit -m "Add discount coupon"
+# PR → main, then deploy
 ```
 
-**Monday 11:00** she opens a PR (CI starts).
-
-**Monday 12:30** Ahmed approves.
-
-**Monday 12:40** merge to `main`.
-
-**Monday 12:45** production auto-deploys coupon feature.
+**Customers see it:** minutes after merge.
 
 ---
 
-# Type 2: Why teams like it
+# Type 2 vs Type 1 (the only difference)
 
-| Good | Watch out |
-|------|-----------|
-| Very simple | Needs good tests |
-| Fast delivery | Incomplete features can reach `main` if you are not careful |
-| Easy for new developers | Not ideal for App Store versioned releases |
+```
+Feature Branch:   PR → main           → deploy whenever
+GitHub Flow:      PR → main           → deploy immediately
+```
 
-**Best for:** websites and APIs that deploy often.
+Same Git commands.  
+Different **team rule after merge**.
+
+Choose **GitHub Flow** for websites that ship many times a week.
 
 ---
 
-# Type 3: Git Flow
+# Type 3 — Git Flow
 
-## What it is
-
-Git Flow uses **two long-lived branches**:
+## Unique rule
+There are **two permanent branches**:
 
 | Branch | Meaning |
 |--------|---------|
-| `main` | Production history + version tags (`v1.2.0`) |
-| `develop` | Next release being prepared |
+| `develop` | next version being built |
+| `main` | versions already given to customers (`v1.3.0`) |
 
-Plus extra branches:
+Features **never** merge straight to `main`.
 
-- `feature/*` from `develop`
-- `release/*` to freeze a version
-- `hotfix/*` for production emergencies
+```
+feature/discount-coupon → develop → release/1.3.0 → main (tag v1.3.0)
+```
 
 ---
 
-# Type 3: Picture
+# Type 3 — Coupon example (the unique part)
 
-```
-feature/discount-coupon
-        │
-        ▼
-     develop  ──► release/1.3.0 ──► main (tag v1.3.0)
-                                      │
-                                      ▼
-                                  hotfix/1.3.1
-```
-
-**Important:** features merge to `develop`, **not** to `main`.
-
----
-
-# Type 3: Example A — Build the feature
-
-Sara does **not** branch from `main`. She branches from `develop`.
+Sara branches from **`develop`**, not from `main`:
 
 ```bash
 git checkout develop
-git pull
 git checkout -b feature/discount-coupon
-
-git add .
-git commit -m "Add discount coupon on checkout"
-git push -u origin feature/discount-coupon
+git commit -m "Add discount coupon"
+# PR → develop   ← NOT to main
 ```
 
-PR is: **`feature/discount-coupon` → `develop`**
+Coupon is now in `develop` only.  
+**Customers still have old shop** until a release.
 
-After merge, coupon is in `develop` only. Production is still old until a release.
-
----
-
-# Type 3: Example B — Release version 1.3.0
-
-The team wants to ship coupon + other finished work.
+Later:
 
 ```bash
 git checkout develop
 git checkout -b release/1.3.0
-
-# only version bump and small bug fixes here
-git commit -m "Prepare release 1.3.0"
-
-# 1) put it on production branch
 git checkout main
-git merge --no-ff release/1.3.0
-git tag -a v1.3.0 -m "Release 1.3.0"
-
-# 2) copy release fixes back to develop
-git checkout develop
-git merge --no-ff release/1.3.0
-git branch -d release/1.3.0
+git merge release/1.3.0
+git tag v1.3.0
 ```
 
-Now production is `v1.3.0`.
+**Customers see it:** on release day, as version `v1.3.0`.
 
 ---
 
-# Type 3: Example C — Production is broken
+# Type 3 — Hotfix (only Git Flow needs this)
 
-Users cannot apply the coupon. Fix without waiting for next big release.
+Production is broken. `develop` already has unfinished features.  
+Fix from **`main`**, not from `develop`.
 
 ```bash
 git checkout main
 git checkout -b hotfix/1.3.1
-
-git commit -m "Fix coupon code case-sensitivity"
-git checkout main
-git merge --no-ff hotfix/1.3.1
-git tag -a v1.3.1 -m "Hotfix 1.3.1"
-
-git checkout develop
-git merge --no-ff hotfix/1.3.1
+# fix, then merge to main AND develop
 ```
 
-Hotfix goes to **production first**, then back to `develop`.
+**Unique to Git Flow:** `hotfix/*` because `main` and `develop` are different.
 
 ---
 
-# Type 3: When to use Git Flow
+# Type 3 — Do not confuse with GitHub Flow
 
-**Use when:**
-- You release every 2–4 weeks
-- You need versions: `v1.3.0`, `v1.3.1`
-- Mobile apps / desktop apps / products with a release date
+| Question | GitHub Flow | Git Flow |
+|---------|-------------|----------|
+| Where does the feature PR go? | `main` | **`develop`** |
+| Do we have `develop`? | No | **Yes** |
+| When do users see it? | Right after merge | **On release day** |
+| Version tags like `v1.3.0`? | Optional | **Normal** |
 
-**Avoid when:**
-- You deploy many times every day
-- Team is small and Git Flow feels too heavy
+If you have a `develop` branch, you are **not** using GitHub Flow.
 
 ---
 
-# Type 4: GitLab Flow
+# Type 4 — GitLab Flow
 
-## What it is
-
-Use feature branches, then **promote the same code through environment branches**.
+## Unique rule
+Branches are named after **environments**. You **promote** by merging.
 
 ```
 feature/discount-coupon
-        │
-        ▼
-      main  ──merge──►  staging  ──merge──►  production
-      (dev)              (QA test)            (live users)
+        ↓ PR
+      main          ← developers
+        ↓ merge
+     staging        ← QA tests here
+        ↓ merge
+    production      ← customers
 ```
 
-The branch name = the environment.
+The unique idea is **promotion**, not “feature branches” (everyone uses those).
 
 ---
 
-# Type 4: Clear Example (same coupon)
+# Type 4 — Coupon example
 
-**Step 1 — build**
 ```bash
+# 1) build
 git checkout main
 git checkout -b feature/discount-coupon
-git commit -m "Add discount coupon"
 # PR into main
-```
 
-**Step 2 — send to QA**
-```bash
+# 2) send to QA
 git checkout staging
 git merge main
-# now QA tests shop.staging.company.com
-```
 
-**Step 3 — send to live**
-```bash
+# 3) send to customers
 git checkout production
 git merge staging
-# now shop.company.com is updated
+```
+
+**Customers see it:** only after the last merge into `production`.
+
+---
+
+# Type 4 vs Type 3 (this is the confusing pair)
+
+| | Git Flow | GitLab Flow |
+|--|----------|-------------|
+| Extra long branches | `develop` + `release/*` | **`staging` + `production`** |
+| Branch names mean | work vs released **version** | **which environment** |
+| How users get the feature | tag a release (`v1.3.0`) | merge into `production` |
+| Typical product | mobile app / versioned software | website with staging URL |
+
+Memory trick:
+
+- Git Flow = **version** (`v1.3.0`)
+- GitLab Flow = **environment** (`staging` / `production`)
+
+---
+
+# Type 5 — Trunk-Based Development
+
+## Unique rule
+You merge to `main` **before the coupon is finished**.  
+Users do not see it until a **feature flag** is ON.
+
+```
+main  (trunk)
+ └── small PR 1: coupon code, NEW_COUPON=false
+ └── small PR 2: more coupon code, still false
+ later: NEW_COUPON=true   ← users see it (no big merge)
 ```
 
 ---
 
-# Type 4: Why this is easy to explain
+# Type 5 — Coupon example (the flag)
 
-You can say in a meeting:
+```javascript
+if (process.env.NEW_COUPON === "true") {
+  showCoupon()     // new
+} else {
+  showOldCheckout()
+}
+```
 
-- “Is it on `main`?” → developers have it
-- “Is it on `staging`?” → QA can test it
-- “Is it on `production`?” → customers have it
+Day 1: merge to `main`, production has `NEW_COUPON=false` → **hidden**  
+Day 4: change config to `true` → **customers see coupon**
 
-**Best for:** teams that think in environments.  
-**Watch out:** `staging` and `production` can drift if people commit extra fixes only there.
-
-**Rule:** never develop on `production`. Always merge forward.
+No `develop`. No waiting for a full finished feature branch.
 
 ---
 
-# Type 5: Trunk-Based Development
+# Type 5 vs Type 2 (the only difference)
 
-## What it is
+Both merge into `main` often.
 
-Almost all work goes to one branch: **`main` (the trunk)**.
+| | GitHub Flow | Trunk-Based |
+|--|-------------|-------------|
+| Merge unfinished coupon to `main`? | **No** (finish first) | **Yes** |
+| How is unfinished work hidden? | Keep it on the feature branch | **Feature flag** |
+| Branch lifetime | days | **hours / 1–2 days** |
 
-Branches are tiny and die the same day (or in 1–2 days).
-
-Unfinished features are hidden with a **feature flag**.
-
-```
-main
- ├── coupon-flag-off   (merged Monday)
- └── coupon-flag-on    (later, still small PR)
-```
+**GitHub Flow:** `main` has only finished features.  
+**Trunk-Based:** `main` can have unfinished features, **switched off**.
 
 ---
 
-# Type 5: Clear Example (same coupon)
+# Type 6 — Forking
 
-Sara cannot finish coupon in one day, but she still merges.
+## Unique rule
+This is about **who owns the copy**, not about `develop` vs `main`.
+
+```
+company/shop     ← original (you cannot push)
+sara/shop        ← Sara's fork (she pushes here)
+     └── PR back to company/shop
+```
+
+You **can** combine forking with GitHub Flow or Git Flow.  
+Forking answers: “Do I clone the company repo, or **my** copy?”
+
+---
+
+# Type 6 — Coupon example
 
 ```bash
-git checkout main
-git checkout -b feat-coupon-behind-flag
-
-# code exists, but hidden
-# if NEW_COUPON == false  → old checkout
-# if NEW_COUPON == true   → new coupon UI
-
-git commit -m "Add coupon UI behind NEW_COUPON flag"
-# PR to main the same day
-```
-
-Production config:
-
-```text
-NEW_COUPON=false
-```
-
-Users do not see coupon yet, but code is already on `main`.
-
----
-
-# Type 5: Enable the feature later
-
-When QA is happy:
-
-```text
-NEW_COUPON=true
-```
-
-No giant merge. Just turn the flag on (maybe for 10% of users first).
-
-If something breaks: set `NEW_COUPON=false` again.
-
-**Best for:** teams with strong CI and frequent deploys.  
-**Hard if:** no tests, or people keep 3-week branches.
-
----
-
-# Type 6: Forking Workflow
-
-## What it is
-
-You do **not** push branches to the company/original repo.
-
-You copy the repo (a **fork**), work there, then open a PR back.
-
-```
-company/shop          ← original (upstream)
- └── sara/shop        ← Sara's fork
-      └── feature/discount-coupon
-            └── Pull Request to company/shop
-```
-
-Used a lot in **open source**.
-
----
-
-# Type 6: Clear Example (same coupon)
-
-Sara is an outside contributor. She cannot push to `company/shop`.
-
-```bash
-# 1. Fork on GitHub website, then clone HER fork
 git clone https://github.com/sara/shop.git
-cd shop
-
-# 2. Remember the original repo
 git remote add upstream https://github.com/company/shop.git
-
-# 3. Work on a branch in HER fork
 git checkout -b feature/discount-coupon
-git commit -m "Add discount coupon"
-git push -u origin feature/discount-coupon
+git push origin feature/discount-coupon
+# PR: sara/shop → company/shop
 ```
 
-Then she opens PR:
+`git remote add upstream` = save the original repo name.  
+Later: `git fetch upstream` to update your fork.
 
-**`sara/shop:feature/discount-coupon` → `company/shop:main`**
-
----
-
-# Type 6: When to use
-
-**Use when:**
-- Open source project
-- Students/vendors should not have write access
-- You want every outsider change reviewed
-
-**Not needed when:**
-- Whole team already has access to one company repo
-  (then Feature Branch / GitHub Flow is enough)
+**Customers see it:** after maintainers merge the PR (using whatever flow they use).
 
 ---
 
-# Same Feature: Side-by-Side
+# Type 6 — Do not confuse with Feature Branch
 
-**Task:** Add Discount Coupon
+| | Feature Branch | Forking |
+|--|----------------|---------|
+| Where do you push? | `company/shop` | **`your-name/shop`** |
+| Who uses it? | company team | **outsiders / open source** |
 
-| Strategy | Where Sara branches | Where she merges | When users see it |
-|----------|---------------------|------------------|-------------------|
-| Feature Branch | from `main` | PR to `main` | after deploy from `main` |
-| GitHub Flow | from `main` | PR to `main` | right after merge/deploy |
-| Git Flow | from `develop` | `develop` then `release` then `main` | on release day (`v1.3.0`) |
-| GitLab Flow | from `main` | `main` → `staging` → `production` | after production merge |
-| Trunk-Based | from `main` | tiny PR to `main` + flag | when flag is turned on |
-| Forking | from her fork | PR to original repo | after maintainers merge |
+Same “one branch + PR” idea.  
+Different **remote** (`origin` = your fork).
 
 ---
 
-# Which One Should You Choose?
+# One table to differentiate all 6
 
-| If your situation is... | Choose |
-|-------------------------|--------|
-| Small team, learning Git | **Feature Branch** |
-| Website, deploy many times a week | **GitHub Flow** |
-| App Store / versioned product | **Git Flow** |
-| Staging then production promotion | **GitLab Flow** |
-| Strong CI, deploy many times a day | **Trunk-Based** |
-| Outside contributors | **Forking** |
+**Question: the coupon is done. What happens?**
 
----
-
-# Super Simple Decision
-
-Ask only 2 questions:
-
-1. **Do we deploy every day?**  
-   Yes → GitHub Flow or Trunk-Based  
-   No → Git Flow or GitLab Flow
-
-2. **Do outsiders contribute?**  
-   Yes → add Forking  
-   No → stay on one repo
-
-Start with the **simplest** option that works.
+| Type | Merge into | Customers see coupon when |
+|------|------------|---------------------------|
+| Feature Branch | `main` | whenever you deploy |
+| GitHub Flow | `main` | **immediately after merge** |
+| Git Flow | **`develop` first** | **release / tag** (`v1.3.0`) |
+| GitLab Flow | `main`, then **`staging`**, then **`production`** | merge to `production` |
+| Trunk-Based | `main` (maybe unfinished) | **flag = true** |
+| Forking | PR from **your fork** | after original repo accepts PR |
 
 ---
 
-# Shared Good Habits (all strategies)
+# “Which type is this?” quiz
 
-1. Do not commit directly to `main`
-2. Use Pull Requests
-3. Run tests in CI before merge
-4. Name branches clearly: `feature/discount-coupon`
-5. Delete branch after merge
-6. Write clear commit messages: `feat: add discount coupon`
-
----
-
-# Common Mistakes
-
-| Mistake | Why it is bad | Do this instead |
-|---------|----------------|-----------------|
-| Work for 3 weeks on one branch | huge conflicts | smaller PRs |
-| Commit to `production` directly | bypasses review | merge from `staging` |
-| Use Git Flow “because it is famous” | extra complexity | pick by release style |
-| Forget to merge hotfix back to `develop` | bug returns later | always merge hotfix to both |
-| No tests on PRs | broken `main` | block merge until CI is green |
+1. We have `develop` and we tag `v2.1.0` on `main`.
+2. We merge to `main` and the website updates in 5 minutes.
+3. QA tests `staging`, then we merge `staging` → `production`.
+4. Code is on `main` but users don’t see it until a switch is ON.
+5. I cannot push to the company repo; I opened a PR from my copy.
+6. We use feature PRs to `main`, and deploy when the manager says so.
 
 ---
 
-# Mini Practice
+# Quiz answers
 
-Match the situation:
-
-1. “We ship iOS app every month as `v2.4.0`.”
-2. “We deploy the website 8 times today.”
-3. “QA must approve on staging before live.”
-4. “A stranger on GitHub wants to add a coupon.”
-5. “Our team is 4 people, first time using PRs.”
-
----
-
-# Practice Answers
-
-1. **Git Flow**
-2. **GitHub Flow** or **Trunk-Based**
-3. **GitLab Flow**
-4. **Forking**
-5. **Feature Branch**
+1. **Git Flow** (`develop` + version tag)
+2. **GitHub Flow** (merge = deploy now)
+3. **GitLab Flow** (environment branches)
+4. **Trunk-Based** (feature flag)
+5. **Forking**
+6. **Feature Branch** (PR to `main`, deploy not forced)
 
 ---
 
-# Cheat Sheet
+# Decision: pick only with this question
+
+**How do customers get new code?**
 
 ```
-1. Feature Branch : one branch + PR
-2. GitHub Flow    : short branch + deploy main now
-3. Git Flow       : develop + release + hotfix + tags
-4. GitLab Flow    : main → staging → production
-5. Trunk-Based    : tiny merges + feature flags
-6. Forking        : work in your copy, PR back
+Immediately after merge to main?     → GitHub Flow
+On a planned version day (v1.3.0)?  → Git Flow
+After QA on a staging branch?       → GitLab Flow
+After turning a flag ON?            → Trunk-Based
+Contributor has no write access?    → Forking
+Just PRs, no extra rules yet?       → Feature Branch
 ```
 
-Remember: all of them are just different ways to do **the same coupon feature safely**.
+Start with **Feature Branch**. Add extra rules only when you need them.
 
 ---
 
-# Final Summary
+# Cheat sheet (pin this)
 
-- A Git strategy is a **team map** for branches
-- Learn the 6 types with **one repeated example**
-- GitHub Flow = simple + fast
-- Git Flow = versions + planned releases
-- GitLab Flow = environment promotion
-- Trunk-Based = smallest changes, all day
-- Forking = outside contributors
+```
+1 Feature Branch : branch + PR                    (base habit)
+2 GitHub Flow    : that + deploy main NOW
+3 Git Flow       : develop ≠ main (versions)
+4 GitLab Flow    : main → staging → production
+5 Trunk-Based    : merge early + FLAG
+6 Forking        : your copy, not company clone
+```
 
-Choose simple first. Add more branches only when you truly need them.
+**Git strategy** and **branching strategy** are the same topic.
 
 ---
 
 # Thank You
 
-References:
-- GitHub Flow: https://docs.github.com/en/get-started/using-github/github-flow
-- Git Flow: https://nvie.com/posts/a-successful-git-branching-model/
-- Trunk-Based Development: https://trunkbaseddevelopment.com/
+Remember: all types use branches and PRs.  
+Differentiate them by **where you merge** and **when users see the change**.
