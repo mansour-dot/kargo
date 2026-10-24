@@ -1,0 +1,43 @@
+docs/eck-manage-deployments-ar/01-نظرة-عامة.md
+  s_b7a28d9755b249::t_bba12352860b16 1-55
+docs/eck-manage-deployments-ar/04-تحديث-النشر.md
+  s_b7a28d9755b249::t_c03b8dcfdbecc5 1-64
+docs/eck-manage-deployments-ar/05-helm-eck-stack.md
+  s_b7a28d9755b249::t_edcd76923e328d 1-142
+docs/eck-manage-deployments-ar/روابط-رسمية.md
+  s_b7a28d9755b249::t_30a8d5d117c472 1-43
+docs/eck-manage-deployments-ar/10-سياسات-stack-config.md
+  s_b7a28d9755b249::t_fb0edecd745756 1-118
+docs/eck-manage-deployments-ar/README.md
+  s_b7a28d9755b249::t_df1d3547dd905a 1-37
+docs/eck-manage-deployments-ar/06-الوصول-والخدمات.md
+  s_b7a28d9755b249::t_b3a77470d1b284 1-97
+docs/eck-manage-deployments-ar/08-إعدادات-elasticsearch.md
+  s_b7a28d9755b249::t_ee3e18eec0c17b 1-123
+docs/eck-manage-deployments-ar/07-ضبط-النشر.md
+  s_b7a28d9755b249::t_765e42521f242f 1-102
+docs/eck-manage-deployments-ar/09-إعدادات-kibana.md
+  s_b7a28d9755b249::t_e4f9e6c07c38ee 1-100
+docs/eck-manage-deployments-ar/02-نشر-elasticsearch.md
+  s_b7a28d9755b249::t_10e85715bfe46a 1-122
+docs/eck-manage-deployments-ar/11-ترقية-الإصدار.md
+  s_b7a28d9755b249::t_6abf5e2a94dfbe 1-75
+docs/eck-manage-deployments-ar/03-نشر-kibana.md
+  s_b7a28d9755b249::t_52cb9e6e781350 1-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "095d1e7b69113bf95459d64bab665f3b6fb9b1c5",
+  "prompts": {},
+  "sessions": {
+    "s_b7a28d9755b249": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "9f047ff8-9029-47ea-9a42-51087d11ec71",
+        "model": "auto-smart"
+      },
+      "human_author": "mansour.ahmed <mansour.ahmed@fawry.com>"
+    }
+  }
+}
