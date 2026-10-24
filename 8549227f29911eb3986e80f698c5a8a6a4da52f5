@@ -1,0 +1,22 @@
+README.md
+  s_3202ec91f31c11::t_7e729a7ec79f85 51-52
+  s_3202ec91f31c11::t_9e07e0b1cbd5f9 3,10,18
+presentation/istio-practical-example.md
+  s_3202ec91f31c11::t_3755b3bb3934ec 1-644
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "8549227f29911eb3986e80f698c5a8a6a4da52f5",
+  "prompts": {},
+  "sessions": {
+    "s_3202ec91f31c11": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "ac846f13-cd5d-445f-ae74-cd0f68104235",
+        "model": "default"
+      },
+      "human_author": "mansour.ahmed <mansour.ahmed@fawry.com>"
+    }
+  }
+}
